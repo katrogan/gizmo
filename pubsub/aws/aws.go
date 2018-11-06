@@ -199,7 +199,7 @@ func NewSubscriber(cfg SQSConfig) (pubsub.Subscriber, error) {
 		return s, errors.New("sqs queue name or url is required")
 	}
 
-	var creds *credentials.Credentials
+	var creds = &credentials.Credentials{}
 	if cfg.AccessKey != "" {
 		creds = credentials.NewStaticCredentials(cfg.AccessKey, cfg.SecretKey, cfg.SessionToken)
 	} else if cfg.RoleARN != "" {
