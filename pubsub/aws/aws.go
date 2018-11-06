@@ -43,7 +43,7 @@ func NewPublisher(cfg SNSConfig) (pubsub.Publisher, error) {
 		return p, errors.New("SNS region is required")
 	}
 
-	var creds *credentials.Credentials
+	var creds = &credentials.Credentials{}
 	if cfg.AccessKey != "" {
 		creds = credentials.NewStaticCredentials(cfg.AccessKey, cfg.SecretKey, cfg.SessionToken)
 	} else if cfg.RoleARN != "" {
@@ -199,17 +199,19 @@ func NewSubscriber(cfg SQSConfig) (pubsub.Subscriber, error) {
 		return s, errors.New("sqs queue name or url is required")
 	}
 
-	var creds = &credentials.Credentials{}
+	var creds = credentials.Credentials{}
 	if cfg.AccessKey != "" {
-		creds = credentials.NewStaticCredentials(cfg.AccessKey, cfg.SecretKey, cfg.SessionToken)
+		creds = *credentials.NewStaticCredentials(cfg.AccessKey, cfg.SecretKey, cfg.SessionToken)
 	} else if cfg.RoleARN != "" {
 		var err error
-		creds, err = requestRoleCredentials(creds, cfg.RoleARN, cfg.MFASerialNumber)
+		assumeRoleCreds, err := requestRoleCredentials(&creds, cfg.RoleARN, cfg.MFASerialNumber)
 		if err != nil {
 			return s, err
 		}
+
+		creds = *assumeRoleCreds
 	} else {
-		creds = credentials.NewEnvCredentials()
+		creds = *credentials.NewEnvCredentials()
 	}
 
 	sess, err := session.NewSession()
@@ -217,7 +219,7 @@ func NewSubscriber(cfg SQSConfig) (pubsub.Subscriber, error) {
 		return s, err
 	}
 	s.sqs = sqs.New(sess, &aws.Config{
-		Credentials: creds,
+		Credentials: &creds,
 		Region:      &cfg.Region,
 	})
 
