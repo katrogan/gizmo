@@ -245,6 +245,7 @@ func NewSubscriber(cfg SQSConfig) (pubsub.Subscriber, error) {
 // Message will decode protobufed message bodies and simply return
 // a byte slice containing the message body for all others types.
 func (m *subscriberMessage) Message() []byte {
+	pubsub.Log.Warnf("The message body  in string format :%s", *m.message.String())
 	if !*m.sub.cfg.ConsumeBase64 {
 		return []byte(*m.message.Body)
 	}
