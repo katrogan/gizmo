@@ -120,6 +120,10 @@ func (m *SubMessage) Done() error {
 	return nil
 }
 
+func (m *SubMessage) PublishTime() *time.Time {
+	return m.msg.PublishTime()
+}
+
 // publisher is a Google Cloud Platform PubSub client that allows a user to
 // consume messages via the pubsub.MultiPublisher interface.
 type publisher struct {
@@ -209,6 +213,7 @@ type (
 		ID() string
 		MsgData() []byte
 		Done()
+		PublishTime() *time.Time
 	}
 
 	messageImpl struct {
