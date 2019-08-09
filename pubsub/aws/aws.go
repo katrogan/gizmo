@@ -3,6 +3,7 @@ package aws // import "github.com/NYTimes/gizmo/pubsub/aws"
 import (
 	"encoding/base64"
 	"errors"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -18,6 +19,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 )
+
+var sentTimestampAttribute = "SentTimestamp"
 
 // publisher will accept AWS credentials and an SNS topic name
 // and it will emit any publish events to it.
@@ -279,6 +282,24 @@ func (m *subscriberMessage) Done() error {
 	return <-receipt
 }
 
+// PublishTime returns the time at which the message was published to the subscriber queue.
+func (m *subscriberMessage) PublishTime() *time.Time {
+	sentTimestampMs := m.message.Attributes[sentTimestampAttribute]
+	if sentTimestampMs == nil {
+		pubsub.Log.Warningf("no SentTimestamp found")
+		return nil
+	}
+	// According to https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_ReceiveMessage.html#API_ReceiveMessage_RequestParameters
+	// the SentTimestamp will be epoch time in milliseconds
+	sentTimestampMsInt, err := strconv.ParseInt(*sentTimestampMs, 10, 64)
+	if err != nil {
+		pubsub.Log.Warnf("unable to parse SentTimestamp as an int: %s", err)
+		return nil
+	}
+	publishTime := time.Unix(0, sentTimestampMsInt*int64(time.Millisecond))
+	return &publishTime
+}
+
 // Start will start consuming messages on the SQS queue
 // and emit any messages to the returned channel.
 // If it encounters any issues, it will populate the Err() error
@@ -304,6 +325,9 @@ func (s *subscriber) Start() <-chan pubsub.SubscriberMessage {
 					MaxNumberOfMessages: s.cfg.MaxMessages,
 					QueueUrl:            s.queueURL,
 					WaitTimeSeconds:     s.cfg.TimeoutSeconds,
+					AttributeNames: []*string{
+						&sentTimestampAttribute,
+					},
 				})
 				if err != nil {
 					// we've encountered a major error

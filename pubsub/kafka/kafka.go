@@ -113,6 +113,11 @@ func (m *subMessage) Done() error {
 	return nil
 }
 
+// PublishTime returns the time at which the message was published to the subscriber queue.
+func (m *subMessage) PublishTime() *time.Time {
+	return &m.message.Timestamp
+}
+
 // NewSubscriber will initiate a the experimental Kafka consumer.
 func NewSubscriber(cfg *Config, offsetProvider func() int64, offsetBroadcast func(int64)) (pubsub.Subscriber, error) {
 	var (

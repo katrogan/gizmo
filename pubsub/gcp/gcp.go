@@ -232,6 +232,11 @@ func (m messageImpl) Done() {
 	m.Msg.Ack()
 }
 
+// PublishTime returns the time at which the message was published to the subscriber queue.
+func (m messageImpl) PublishTime() *time.Time{
+	return &m.Msg.PublishTime
+}
+
 func (s subscriptionImpl) Receive(ctx context.Context, f func(context.Context, message)) error {
 	return s.Sub.Receive(ctx, func(ctx context.Context, msg *gpubsub.Message) {
 		f(ctx, messageImpl{msg})

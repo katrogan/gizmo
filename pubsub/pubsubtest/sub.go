@@ -37,6 +37,7 @@ type (
 		Msg         []byte
 		DoneTimeout time.Duration
 		Doned       bool
+		PublishTimestamp time.Time
 	}
 )
 
@@ -55,6 +56,11 @@ func (m *TestSubsMessage) ExtendDoneDeadline(d time.Duration) error {
 func (m *TestSubsMessage) Done() error {
 	m.Doned = true
 	return nil
+}
+
+// PublishTime returns the time at which the message was published to the subscriber queue.
+func (m *TestSubsMessage) PublishTime() *time.Time {
+	return &m.PublishTimestamp
 }
 
 // Start will populate and return the test channel for the subscriber

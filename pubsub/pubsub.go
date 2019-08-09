@@ -52,4 +52,5 @@ type SubscriberMessage interface {
 	Message() []byte
 	ExtendDoneDeadline(time.Duration) error
 	Done() error
+	PublishTime() *time.Time
 }
